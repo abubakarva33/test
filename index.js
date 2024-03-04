@@ -11,13 +11,12 @@ import orderRoutes from "./server/routes/order.routes.js";
 import noticeRoutes from "./server/routes/notice.routes.js";
 import connectDB from "./server/DB/databaseConfigs.js";
 import { uploder } from "./server/middleware/uploder.js";
-import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
 
 const app = express();
 
 const PORT = process.env.PORT || 5000;
-
 
 cloudinary.config({
   cloud_name: "dhssmpovl",
@@ -39,16 +38,19 @@ app.use("/api/recharge", rechargeRoutes);
 app.use("/api/notice", noticeRoutes);
 
 app.post("/upload", uploder.single("file"), async (req, res) => {
-  // Handle uploaded file
-
-try {
-	const uploadResponse = await cloudinary.uploader.upload(req.file.path);
-	console.log({ uploadResponse });
-	console.log(req.file);
-	res.status(200).send(req.file);
-} catch (error) {
-	console.log(error)
-}
+  try {
+    const uploadResponse = await cloudinary.uploader.upload(req.file.path);
+    fs.unlink(req.file.path, (err) => {
+      if (err) {
+        console.error("Error deleting file:", err);
+      } else {
+        console.log("File deleted successfully");
+      }
+    });
+    res.status(200).send(uploadResponse);
+  } catch (error) {
+    console.log(error);
+  }
 });
 app.get("/", (req, res) => {
   res.send("Hello to online API");
