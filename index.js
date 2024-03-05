@@ -12,17 +12,13 @@ import noticeRoutes from "./server/routes/notice.routes.js";
 import connectDB from "./server/DB/databaseConfigs.js";
 import { uploder } from "./server/middleware/uploder.js";
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
+
+import { uploadSingle } from "./server/middleware/uploadSingle.js";
 
 const app = express();
 
 const PORT = process.env.PORT || 5000;
 
-cloudinary.config({
-  cloud_name: "dhssmpovl",
-  api_key: "554282213618176",
-  api_secret: "JVOkk3d3TihtTVYFAFme0SvH0fo",
-});
 
 dotenv.config();
 app.use(cors());
@@ -37,20 +33,28 @@ app.use("/api/order", uploder.single("file"), orderRoutes);
 app.use("/api/recharge", rechargeRoutes);
 app.use("/api/notice", noticeRoutes);
 
-app.post("/upload", uploder.single("file"), async (req, res) => {
-  try {
-    const uploadResponse = await cloudinary.uploader.upload(req.file.path);
-    fs.unlink(req.file.path, (err) => {
-      if (err) {
-        console.error("Error deleting file:", err);
-      } else {
-        console.log("File deleted successfully");
-      }
-    });
-    res.status(200).send(uploadResponse);
-  } catch (error) {
-    console.log(error);
-  }
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
+
+app.post("/upload", uploder.single("file"), uploadSingle, async (req, res) => {
+  res.send(req.body)
+  // try {
+  //   const uploadResponse = await cloudinary.uploader.upload(req.file.path);
+  //   fs.unlink(req.file.path, (err) => {
+  //     if (err) {
+  //       console.error("Error deleting file:", err);
+  //     } else {
+  //       console.log("File deleted successfully");
+  //     }
+  //   });
+  //   res.status(200).send(uploadResponse);
+  // } catch (error) {
+  //   console.log(error);
+  // }
 });
 app.get("/", (req, res) => {
   res.send("Hello to online API");
